@@ -6,8 +6,9 @@ import datetime
 from transformers import TextDataset, DataCollatorForLanguageModeling
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import GPT2Tokenizer, GPT2Model, GPT2Config, GPT2LMHeadModel
+from datasets import Dataset, DatasetDict
 import torch
-from torch.utils.data import Dataset, DataLoader
+# from torch.utils.data import Dataset, DataLoader
 # import pytorch_lighting as pl
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -17,8 +18,10 @@ from transformers import Trainer, TrainingArguments, AutoModelWithLMHead
 
 # tokenizer = AutoTokenizer.from_pretrained('gpt2', bos_token='<|startoftext|>', eos_token='<|endoftext|>',
 #                                           pad_token='<|pad|>')
-# torch.cuda.set_device(0)
-# torch.cuda.current_device()
+import os
+# from transformers import Dataset
+# os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 tokenizer = AutoTokenizer.from_pretrained('gpt2')
 tokenizer.save_pretrained('Recipe')
 tokenizer.add_special_tokens({
@@ -29,27 +32,49 @@ tokenizer.add_special_tokens({
         '<EOI>',
         '<SOR>']
 })
-tokenizer.truncation = True
-tokenizer.max_length = 512
-model = AutoModelForCausalLM.from_pretrained('gpt2')
-text = "Replace me by any text you'd like."
-encoded_input = tokenizer(text, truncation=True, return_tensors='pt', max_length=512)
-output = model(**encoded_input)
 
-train_path = 'train_dataset2.txt'
-test_path = 'test_dataset2.txt'
+
+def tokenize_function(examples):
+    return tokenizer(examples['text'])#, padding="max_length", truncation=True)
+
+
+# tokenizer.truncation = True
+# tokenizer.max_length = 512
+model = AutoModelForCausalLM.from_pretrained('gpt2')
+# text = "Replace me by any text you'd like."
+# encoded_input = tokenizer(text, truncation=True, return_tensors='pt', max_length=512)
+# output = model(**encoded_input)
+train_df = pd.read_csv('train_dataframe.csv')
+
+train_dataset = Dataset.from_pandas(train_df)
+tokenized_datasets = train_dataset.map(tokenize_function, batched=True, num_proc=1, remove_columns=["text"])
+
+def group_texts(examples):
+    # Concatenate all texts.
+    concatenated_examples = {k: sum(examples[k], []) for k in examples.keys()}
+    total_length = len(concatenated_examples[list(examples.keys())[0]])
+    # We drop the small remainder, we could add padding if the model supported it instead of this drop, you can
+        # customize this part to your needs.
+    total_length = (total_length // block_size) * block_size
+    # Split by chunks of max_len.
+    result = {
+        k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
+        for k, t in concatenated_examples.items()
+    }
+    result["labels"] = result["input_ids"].copy()
+    return result
 
 
 def load_dataset(train_path, test_path, tokenizer):
     train_dataset = TextDataset(
         tokenizer=tokenizer,
         file_path=train_path,
-        block_size=16)
+        block_size=2)
 
     test_dataset = TextDataset(
         tokenizer=tokenizer,
         file_path=test_path,
-        block_size=16)
+        block_size=2)
 
     data_collator = DataCollatorForLanguageModeling(
         tokenizer=tokenizer, mlm=False,
