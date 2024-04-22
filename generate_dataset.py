@@ -67,7 +67,7 @@ class DataAnalysis:
     def __init__(self, df):
         self.df = df.copy()
 
-    def plot_distribution(self):
+    def get_distribution(self):
         x = self.df.copy()
         x['ingred_len'] = self.df['ingred'].apply(lambda x: len(x.split()))
         x['instr_len'] = self.df['instructions'].apply(lambda x: len(x.split()))
@@ -81,15 +81,6 @@ class DataAnalysis:
         # find the rows lying in the 25th and 75th percentile
         x = x[(x['ingred_len'] > ingred_25) & (x['ingred_len'] < ingred_75) & (x['instr_len'] > instr_25) & (x['instr_len'] < instr_75)].reset_index(drop=True)
 
-        # plot the distribution of the ingredients and instructions
-        fig, axs = plt.subplots(1, 2, figsize=(20, 4))
-
-        sns.histplot(x['ingred_len'], bins=50, color='blue', kde=True, ax=axs[0])
-        axs[0].set_title('Distribution of Ingredients Length')
-
-        sns.histplot(x['instr_len'], bins=50, color='red', kde=True, ax=axs[1])
-        axs[1].set_title('Distribution of Instructions Length')
-
         plt.show()
 
         return x
@@ -99,10 +90,10 @@ if __name__ == "__main__":
     train_df, test_df = recipe_data.process_data()
 
     data_analysis = DataAnalysis(train_df)
-    x = data_analysis.plot_distribution()
+    x = data_analysis.get_distribution()
 
     data_analysis_test = DataAnalysis(test_df)
-    x_test = data_analysis_test.plot_distribution()
+    x_test = data_analysis_test.get_distribution()
 
     x.to_csv('train_df.csv')
     x_test.to_csv('test_df.csv')
