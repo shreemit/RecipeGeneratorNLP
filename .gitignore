@@ -3,6 +3,7 @@
 Recipe/recipe1M_layers/layer1.json
 Recipe/recipe1M_layers/layer2.json
 *.csv
+*.pth
 drive-download-20230416T043615Z-001.zip
 wandb/
 RecipeGenerator/

@@ -5,3 +5,5 @@ pandas
 numpy
 wandb
 scikit-learn
+rouge 
+nltk

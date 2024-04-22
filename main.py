@@ -23,11 +23,11 @@ def main():
 
     # Initialize datasets
     train_dataset = RecipeDataset(train_df, tokenizer, 40, 128)
-    val_dataset = RecipeDataset(val_df, tokenizer, 40, 128)
+    val_dataset = RecipeDataset(val_df[0:1000], tokenizer, 40, 128)
 
     # Initialize dataloaders
-    train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=4, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 
     wandb.init(project="T5-training", entity="shreemit27")
     wandb.watch(model, log="all")
@@ -45,8 +45,6 @@ def main():
     # Print some results
     for source, prediction, actual in zip(sources[:10], predictions[:10], actuals[:10]):
         print(f'Source: {source}\nPrediction: {prediction}\nActual: {actual}\n')
-
-    # evaluate the model using BLEU score
 
 
 

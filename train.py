@@ -9,6 +9,8 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 from sklearn.model_selection import train_test_split
 from transformers import get_scheduler
+from nltk.translate.bleu_score import corpus_bleu
+from rouge import Rouge
 import wandb
 
 class RecipeDataset(Dataset):
@@ -64,10 +66,11 @@ class T5Trainer:
         val_dataloader,
         device,
         epochs=3,
-        learning_rate=5e-5,
-        warmup_steps=1e2,
+        learning_rate=1e-5,
+        warmup_steps=500,
         epsilon=1e-8,
         sample_every=100,
+        max_grad_norm=1.0,
     ):
         self.model = model
         self.tokenizer = tokenizer
@@ -83,9 +86,10 @@ class T5Trainer:
         self.optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
         num_training_steps = epochs * len(train_dataloader)
         self.lr_scheduler = get_scheduler(name="linear", 
-                                     optimizer=self.optimizer, 
-                                     num_warmup_steps=self.warmup_steps, 
-                                     num_training_steps=num_training_steps)
+                                          optimizer=self.optimizer, 
+                                          num_warmup_steps=self.warmup_steps, 
+                                          num_training_steps=num_training_steps)
+        self.max_grad_norm = max_grad_norm
 
     def train(self):
         for epoch in range(self.epochs):
@@ -100,18 +104,36 @@ class T5Trainer:
                 loss = outputs.loss
                 loss.backward()
 
+                # Gradient clipping
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.max_grad_norm)
+
                 self.optimizer.step()
                 self.lr_scheduler.step()
                 self.optimizer.zero_grad()
 
-                if iteration % 500 == 0:
-                    print(f'Epoch: {epoch}, Iteration: {iteration}, Loss:  {loss.item()}')
+                if iteration % self.sample_every == 0:
+                    print(f'Epoch: {epoch}, Iteration: {iteration}, Loss: {loss.item()}')
                     # Log metrics to Weights & Biases
                     wandb.log({"loss": loss.item()})
+
+                    # Calculate and log BLEU and ROUGE scores
+                    self.model.eval()
+                    self.model = self.model.to('cpu')
+                    batch = {k: v.to('cpu') for k, v in data.items()}
+                    predictions = self.model.generate(batch['source_ids'], max_length=128, num_beams=4, early_stopping=True)
+                    predicted_texts = [self.tokenizer.decode(p, skip_special_tokens=True) for p in predictions]
+                    target_texts = [self.tokenizer.decode(t, skip_special_tokens=True) for t in batch['target_ids']]
+
+                    bleu_score = corpus_bleu([[t.split()] for t in target_texts], [p.split() for p in predicted_texts])
+                    rouge_score = self.rouge.get_scores(predicted_texts, target_texts, avg=True)
+
+                    wandb.log({"BLEU": bleu_score, "ROUGE-L": rouge_score["rouge-l"]["f"]})
+
                 
                 # save the model every 5000 iterations
                 if iteration == 5000:
-                    torch.save(self.model.state_dict(), f'model_{epoch}_{iteration}.pth')
+                    print(f'Saving model at epoch {epoch} and iteration {iteration}')
+                    torch.save(self.model.state_dict(), f'trained_models/model_{epoch}_{iteration}.pth')
 
     def validate(self):
         self.model.eval()
