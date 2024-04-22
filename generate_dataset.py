@@ -30,7 +30,7 @@ class RecipeData:
             if item:
                 item_list.append(item)
 
-        ingredient_list = ' </I> '.join(item_list)
+        ingredient_list = ' <I> '.join(item_list)
         return ingredient_list
 
     def get_instructions(self, recipe):
@@ -94,6 +94,8 @@ if __name__ == "__main__":
 
     data_analysis_test = DataAnalysis(test_df)
     x_test = data_analysis_test.get_distribution()
+
+    print("Generating train and test datasets...", len(x), len(x_test))
 
     x.to_csv('train_df.csv')
     x_test.to_csv('test_df.csv')

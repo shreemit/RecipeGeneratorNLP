@@ -1,0 +1,7 @@
+transformers
+torch
+sentencepiece
+pandas
+numpy
+wandb
+scikit-learn

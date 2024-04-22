@@ -44,7 +44,7 @@ model = AutoModelForCausalLM.from_pretrained('gpt2')
 # text = "Replace me by any text you'd like."
 # encoded_input = tokenizer(text, truncation=True, return_tensors='pt', max_length=512)
 # output = model(**encoded_input)
-train_df = pd.read_csv('train_dataframe.csv')
+train_df = pd.read_csv('train_df.csv')
 
 train_dataset = Dataset.from_pandas(train_df)
 tokenized_datasets = train_dataset.map(tokenize_function, batched=True, num_proc=1, remove_columns=["text"])
