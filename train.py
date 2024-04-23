@@ -66,7 +66,7 @@ class T5Trainer:
         val_dataloader,
         device,
         epochs=3,
-        learning_rate=1e-5,
+        learning_rate=5e-5,
         warmup_steps=500,
         epsilon=1e-8,
         sample_every=100,
@@ -116,24 +116,26 @@ class T5Trainer:
                     # Log metrics to Weights & Biases
                     wandb.log({"loss": loss.item()})
 
-                    # Calculate and log BLEU and ROUGE scores
-                    self.model.eval()
-                    self.model = self.model.to('cpu')
-                    batch = {k: v.to('cpu') for k, v in data.items()}
-                    predictions = self.model.generate(batch['source_ids'], max_length=128, num_beams=4, early_stopping=True)
-                    predicted_texts = [self.tokenizer.decode(p, skip_special_tokens=True) for p in predictions]
-                    target_texts = [self.tokenizer.decode(t, skip_special_tokens=True) for t in batch['target_ids']]
+                    # # Calculate and log BLEU and ROUGE scores
+                    # self.model.eval()
+                    # self.model = self.model.to('cpu')
+                    # batch = {k: v.to('cpu') for k, v in data.items()}
+                    # predictions = self.model.generate(batch['source_ids'], max_length=128, num_beams=4, early_stopping=True)
+                    # predicted_texts = [self.tokenizer.decode(p, skip_special_tokens=True) for p in predictions]
+                    # target_texts = [self.tokenizer.decode(t, skip_special_tokens=True) for t in batch['target_ids']]
 
-                    bleu_score = corpus_bleu([[t.split()] for t in target_texts], [p.split() for p in predicted_texts])
-                    rouge_score = self.rouge.get_scores(predicted_texts, target_texts, avg=True)
+                    # bleu_score = corpus_bleu([[t.split()] for t in target_texts], [p.split() for p in predicted_texts])
+                    # rouge_score = self.rouge.get_scores(predicted_texts, target_texts, avg=True)
 
-                    wandb.log({"BLEU": bleu_score, "ROUGE-L": rouge_score["rouge-l"]["f"]})
+                    # wandb.log({"BLEU": bleu_score, "ROUGE-L": rouge_score["rouge-l"]["f"]})
 
                 
                 # save the model every 5000 iterations
-                if iteration == 5000:
+                if iteration % 5000 == 0:
                     print(f'Saving model at epoch {epoch} and iteration {iteration}')
                     torch.save(self.model.state_dict(), f'trained_models/model_{epoch}_{iteration}.pth')
+        
+            torch.save(self.model.state_dict(), f'trained_models/model_complete.pth')
 
     def validate(self):
         self.model.eval()

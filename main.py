@@ -22,8 +22,8 @@ def main():
     model = T5ForConditionalGeneration.from_pretrained('google-t5/t5-small').to(device)
 
     # Initialize datasets
-    train_dataset = RecipeDataset(train_df, tokenizer, 40, 128)
-    val_dataset = RecipeDataset(val_df[0:1000], tokenizer, 40, 128)
+    train_dataset = RecipeDataset(train_df, tokenizer, 40, 150)
+    val_dataset = RecipeDataset(val_df[0:1000], tokenizer, 40, 150)
 
     # Initialize dataloaders
     train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True)
@@ -38,6 +38,8 @@ def main():
     # Train model
     trainer.train()
 
+    torch.save(model.state_dict(), f'trained_models/model_complete.pth')
+
     # Validate model
     model.to('cpu')
     sources, predictions, actuals = trainer.validate()
@@ -46,7 +48,7 @@ def main():
     for source, prediction, actual in zip(sources[:10], predictions[:10], actuals[:10]):
         print(f'Source: {source}\nPrediction: {prediction}\nActual: {actual}\n')
 
-
+    
 
 
 if __name__ == '__main__':
