@@ -13,21 +13,18 @@ The foundation of the project lies in the preparation of the dataset. The `gener
 - Removing unnecessary characters, numbers, and measurements from ingredient names.
 - Tokenizing and formatting instructions for the model.
 
-### 2. Tokenization and Dataset Creation
+### 2. Model Training
 
-The `train.py` script handles the tokenization of the dataset and the creation of the training and testing datasets. It uses the Hugging Face `transformers` library to tokenize the text data, adding special tokens for the start and end of sentences, as well as separators for ingredients and instructions. The script also groups texts into blocks of a specified size, ensuring that the model can process the data efficiently.
+The `train.py` script handles the tokenization of the dataset, the creation of the training and validation datasets, and the training of the T5 model. It defines the following classes:
 
-### 3. Model Training
+- `RecipeDataset`: A custom PyTorch dataset class that handles the tokenization and formatting of the input and target sequences.
+- `T5Trainer`: A class that handles the training loop for the T5 model, including optimizers, schedulers, and logging to Weights & Biases.
 
-The core of the project is the training of the T5 model on the prepared dataset. The `train.py` script sets up the training environment, including the model, tokenizer, and training arguments. It uses the Hugging Face `Trainer` class to manage the training process, including saving the model and evaluating its performance.
+The `T5Trainer` class is responsible for training the T5 model on the prepared dataset. It sets up the training environment, including the model, tokenizer, optimizers, and learning rate schedulers. The class also logs training metrics, such as loss, BLEU score, and ROUGE score, to Weights & Biases for monitoring and analysis.
 
-### 4. Testing and Evaluation
+### 3. Testing and Evaluation
 
-The `test.py` script demonstrates how to use the trained model to generate recipes. It loads the trained model and tokenizer, then uses the `pipeline` function from the `transformers` library to create a text generation pipeline. This pipeline can be used to generate recipes based on given ingredients, showcasing the model's ability to understand and generate textual data.
-
-### 5. Data Analysis
-
-The `generate_dataset.py` script and the `DataAnalysis` class within it provide tools for analyzing the dataset. This includes visualizing the distribution of ingredient and instruction lengths, which can help in understanding the data and identifying potential issues or areas for improvement.
+The `test.py` script defines the `TestModel` class, which is responsible for testing the trained model on the test dataset. It loads the trained model and tokenizer, then generates predictions for the test data. The script calculates and prints BLEU, ROUGE, and BERT scores for the generated predictions.
 
 ## Getting Started
 
@@ -36,7 +33,7 @@ To get started with the project, follow these steps:
 1. Ensure you have Python 3.6 or later installed.
 2. Install the required libraries by running `pip install -r requirements.txt`.
 3. Run the `generate_dataset.py` script to prepare the dataset.
-4. Train the model by running `main.py`.
+4. Train the model by running `train.py`.
 5. Test the model by running `test.py`.
 
 ## Training the Model
@@ -44,7 +41,7 @@ To get started with the project, follow these steps:
 To train the model, follow these steps:
 
 1. Prepare the dataset by running `generate_dataset.py`. This will create `train_df.csv` and `test_df.csv` files.
-2. Train the model by executing `main.py`. This script initializes the T5 model, sets up the training and validation datasets, and trains the model.
+2. Train the model by executing `train.py`. This script initializes the T5 model, sets up the training and validation datasets, and trains the model using the `T5Trainer` class.
 3. The trained model will be saved in the `trained_models` directory.
 
 ## Testing the Model
@@ -52,7 +49,7 @@ To train the model, follow these steps:
 To test the model, follow these steps:
 
 1. Ensure you have a trained model saved in the `trained_models` directory.
-2. Run `test.py` to test the model. This script loads the trained model, processes the test dataset, and generates predictions.
+2. Run `test.py` to test the model. This script loads the trained model, processes the test dataset, and generates predictions using the `TestModel` class.
 3. The script calculates and prints BLEU, ROUGE, and BERT scores for the generated predictions.
 
 ## Further Possible Improvements
